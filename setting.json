@@ -1,21 +1,38 @@
 {
   "sheet": "Sheet1",
-  "columns": {
-    "Kata": 3,
-    "Lot": 5,
-    "Qty": 10
+
+  "start": 8,
+
+  "filename": {
+    "name": "ファイル"
   },
-  "rows": {
-    "start": 8
+
+  "date": {
+    "name": "日付",
+    "remove": "Date: ",
+    "row": 0,
+    "column": 3
   },
-  "cells": {
-    "date": {
-      "row": 0,
-      "column": 3
-    },
-    "invoice": {
-      "row": 2,
-      "column": 3
-    }
+
+  "invoice": {
+    "name": "インボイス",
+    "remove": "Sales Invoice No : ",
+    "row": 2,
+    "column": 3
+  },
+
+  "kata": {
+    "name": "型番",
+    "index": 3
+  },
+
+  "lot": {
+    "name": "ロット",
+    "index": 5
+  },
+
+  "qty": {
+    "name": "数量",
+    "index": 10
   }
 }

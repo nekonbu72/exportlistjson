@@ -18,18 +18,18 @@ func TestNewSetting(t *testing.T) {
 		return
 	}
 
-	if s.Columns.Kata != 3 {
-		t.Errorf("Columns.Kata: %v\n", s.Columns.Kata)
+	if s.Kata.Index != 3 {
+		t.Errorf("Kata: %v\n", s.Kata)
 		return
 	}
 
-	if s.Rows.Start != 8 {
-		t.Errorf("Rows.Start: %v\n", s.Rows.Start)
+	if s.Start != 8 {
+		t.Errorf("Start: %v\n", s.Start)
 		return
 	}
 
-	if s.Cells.Date.Row != 0 {
-		t.Errorf("Cells.Date.Row: %v\n", s.Cells.Date.Row)
+	if s.Date.Row != 0 {
+		t.Errorf("Date.Row: %v\n", s.Date.Row)
 		return
 	}
 }
