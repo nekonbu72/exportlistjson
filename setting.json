@@ -1,0 +1,21 @@
+{
+  "sheet": "Sheet1",
+  "columns": {
+    "Kata": 3,
+    "Lot": 5,
+    "Qty": 10
+  },
+  "rows": {
+    "start": 8
+  },
+  "cells": {
+    "date": {
+      "row": 0,
+      "column": 3
+    },
+    "invoice": {
+      "row": 2,
+      "column": 3
+    }
+  }
+}
