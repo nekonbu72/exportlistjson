@@ -3,36 +3,19 @@
 
   "start": 8,
 
-  "filename": {
-    "name": "ファイル"
-  },
-
   "date": {
-    "name": "日付",
     "remove": "Date: ",
     "row": 0,
     "column": 3
   },
 
   "invoice": {
-    "name": "インボイス",
     "remove": "Sales Invoice No : ",
     "row": 2,
     "column": 3
   },
 
-  "kata": {
-    "name": "型番",
-    "index": 3
-  },
-
-  "lot": {
-    "name": "ロット",
-    "index": 5
-  },
-
-  "qty": {
-    "name": "数量",
-    "index": 10
-  }
+  "kata": 3,
+  "lot": 5,
+  "qty": 10
 }

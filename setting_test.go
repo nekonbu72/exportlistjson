@@ -1,13 +1,11 @@
-package exportlistjson_test
+package exportlistjson
 
 import (
 	"testing"
-
-	"github.com/nekonbu72/exportlistjson"
 )
 
 func TestNewSetting(t *testing.T) {
-	s, err := exportlistjson.NewSetting()
+	s, err := NewSetting()
 	if err != nil {
 		t.Errorf("NewSetting: %v\n", err)
 		return
@@ -18,7 +16,7 @@ func TestNewSetting(t *testing.T) {
 		return
 	}
 
-	if s.Kata.Index != 3 {
+	if s.Kata != 3 {
 		t.Errorf("Kata: %v\n", s.Kata)
 		return
 	}

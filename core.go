@@ -12,7 +12,7 @@ import (
 )
 
 type Data struct {
-	Filename string
+	FileName string
 	Date     string
 	Invoice  string
 	Kata     string
@@ -71,19 +71,19 @@ func toData(s *Setting, x *xemlsx.XLSX) ([]*Data, error) {
 	}
 
 	for r := s.Start; r <= sheet.MaxRow; r++ {
-		kata := sheet.Cell(r, s.Kata.Index).Value
+		kata := sheet.Cell(r, s.Kata).Value
 		if kata == "" {
 			r++
 			continue
 		}
 
-		lot := sheet.Cell(r, s.Lot.Index).Value
+		lot := sheet.Cell(r, s.Lot).Value
 		if lot == "" {
 			r++
 			continue
 		}
 
-		qty, err := strconv.Atoi(sheet.Cell(r, s.Qty.Index).Value)
+		qty, err := strconv.Atoi(sheet.Cell(r, s.Qty).Value)
 		if err != nil {
 			r++
 			continue
@@ -94,7 +94,7 @@ func toData(s *Setting, x *xemlsx.XLSX) ([]*Data, error) {
 		}
 
 		data := &Data{
-			Filename: x.Filename,
+			FileName: x.FileName,
 			Date:     date,
 			Invoice:  inv,
 			Kata:     kata,

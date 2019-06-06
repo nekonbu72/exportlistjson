@@ -1,19 +1,20 @@
-package exportlistjson_test
+package exportlistjson
 
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 	"strconv"
 	"testing"
 
-	"github.com/nekonbu72/exportlistjson"
-	"github.com/nekonbu72/mailg"
 	"github.com/nekonbu72/xemlsx"
 	"github.com/tealeg/xlsx"
 )
 
-const dir string = "test"
+const (
+	dir = "test"
+)
 
 func testPaths() []string {
 	return dirwalk(dir)
@@ -71,11 +72,8 @@ func testXLSXStream(done chan interface{}) <-chan *xemlsx.XLSX {
 			case <-done:
 				return
 			case xlsxStream <- &xemlsx.XLSX{
-				Attachment: &mailg.Attachment{
-					Filename: strconv.Itoa(i),
-					Reader:   nil,
-				},
-				File: f,
+				FileName: "File#" + strconv.Itoa(i),
+				File:     f,
 			}:
 			}
 		}
@@ -88,7 +86,7 @@ func TestToJSON(t *testing.T) {
 	defer close(done)
 
 	ch := testXLSXStream(done)
-	ch2 := exportlistjson.ToJSON(done, ch)
+	ch2 := ToJSON(done, ch)
 
 	var js []string
 	for j := range ch2 {
@@ -97,5 +95,9 @@ func TestToJSON(t *testing.T) {
 
 	if len(js) != len(testPaths()) {
 		t.Errorf("len: %v\n", len(js))
+	}
+
+	for _, j := range js {
+		log.Println(j)
 	}
 }

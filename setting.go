@@ -7,38 +7,23 @@ type Setting struct {
 
 	Start int `json:"start"`
 
-	Filename struct {
-		Name string `json:"name"`
-	} `json:"filename"`
-
 	Date struct {
-		Name   string `json:"name"`
 		Remove string `json:"remove"`
 		Row    int    `json:"row"`
 		Column int    `json:"column"`
 	} `json:"date"`
 
 	Invoice struct {
-		Name   string `json:"name"`
 		Remove string `json:"remove"`
 		Row    int    `json:"row"`
 		Column int    `json:"column"`
 	} `json:"invoice"`
 
-	Kata struct {
-		Name  string `json:"name"`
-		Index int    `json:"index"`
-	} `json:"kata"`
+	Kata int `json:"kata"`
 
-	Lot struct {
-		Name  string `json:"name"`
-		Index int    `json:"index"`
-	} `json:"lot"`
+	Lot int `json:"lot"`
 
-	Qty struct {
-		Name  string `json:"name"`
-		Index int    `json:"index"`
-	} `json:"qty"`
+	Qty int `json:"qty"`
 }
 
 const jsonPath = "setting.json"
