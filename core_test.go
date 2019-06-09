@@ -101,3 +101,23 @@ func TestToJSON(t *testing.T) {
 		log.Println(j)
 	}
 }
+
+func TestToData2(t *testing.T) {
+	s, _ := NewSetting()
+
+	done := make(chan interface{})
+	defer close(done)
+
+	xlsxStream := testXLSXStream(done)
+	xlsxDataStream := toXLSXData(done, s, xlsxStream)
+	dataStream := toData2(done, xlsxDataStream)
+
+	var data []*Data
+	for d := range dataStream {
+		data = append(data, d)
+	}
+
+	for _, d := range data {
+		log.Println(d)
+	}
+}

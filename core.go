@@ -21,7 +21,7 @@ type Data struct {
 }
 
 const (
-	errLimit int = 3
+	errLimit = 3
 )
 
 func toJSON(s *Setting, x *xemlsx.XLSX) (string, error) {
