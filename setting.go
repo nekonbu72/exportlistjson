@@ -1,4 +1,4 @@
-package exportlistjson
+package exportlistmapping
 
 import "github.com/nekonbu72/sjson/sjson"
 

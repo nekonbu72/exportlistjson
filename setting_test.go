@@ -1,4 +1,4 @@
-package exportlistjson
+package exportlistmapping
 
 import (
 	"testing"
