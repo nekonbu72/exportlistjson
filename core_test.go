@@ -81,40 +81,29 @@ func testXLSXStream(done chan interface{}) <-chan *xemlsx.XLSX {
 	return xlsxStream
 }
 
-func TestToJSON(t *testing.T) {
-	done := make(chan interface{})
-	defer close(done)
-
-	ch := testXLSXStream(done)
-	ch2 := ToJSON(done, ch)
-
-	var js []string
-	for j := range ch2 {
-		js = append(js, j)
-	}
-
-	if len(js) != len(testPaths()) {
-		t.Errorf("len: %v\n", len(js))
-	}
-
-	for _, j := range js {
-		log.Println(j)
-	}
-}
-
-func TestToData2(t *testing.T) {
-	s, _ := NewSetting()
-
+func TestToData(t *testing.T) {
 	done := make(chan interface{})
 	defer close(done)
 
 	xlsxStream := testXLSXStream(done)
-	xlsxDataStream := toXLSXData(done, s, xlsxStream)
-	dataStream := toData2(done, xlsxDataStream)
+	dataStream := ToData(done, xlsxStream)
 
 	var data []*Data
 	for d := range dataStream {
 		data = append(data, d)
+	}
+
+	for _, d := range data {
+		log.Println(d)
+	}
+}
+
+func TestFetch(t *testing.T) {
+	done := make(chan interface{})
+	defer close(done)
+	data, err := Fetch(testXLSXStream(done))
+	if err != nil {
+		t.Errorf("Fetch: %v\n", err)
 	}
 
 	for _, d := range data {

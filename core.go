@@ -1,14 +1,17 @@
 package exportlistmapping
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"log"
 	"strconv"
 	"strings"
 
 	"github.com/nekonbu72/xemlsx"
+	"github.com/tealeg/xlsx"
+)
+
+const (
+	errLimit = 3
 )
 
 type Data struct {
@@ -20,110 +23,98 @@ type Data struct {
 	Qty      int
 }
 
-const (
-	errLimit = 3
-)
-
-func toJSON(s *Setting, x *xemlsx.XLSX) (string, error) {
-	ds, err := toData(s, x)
-	if err != nil {
-		return "", err
-	}
-
-	buf := bytes.NewBuffer(nil)
-	b, err := json.Marshal(ds)
-	if err != nil {
-		return "", err
-	}
-
-	if _, err := buf.Write(b); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
+type XLSXData struct {
+	FileName string
+	*SheetData
 }
 
-func toData(s *Setting, x *xemlsx.XLSX) ([]*Data, error) {
-	var datas []*Data
-
-	sheet, ok := x.File.Sheet[s.Sheet]
-	if !ok {
-		return nil, errors.New("Sheet not found: " + s.Sheet)
-	}
-
-	date := strings.Trim(
-		sheet.Cell(
-			s.Date.Row,
-			s.Date.Column,
-		).Value, s.Date.Remove)
-	if date == "" {
-		return nil, errors.New("Empty date")
-	}
-
-	// strings.Trim だとうまくいかなかった
-	inv := strings.Replace(
-		sheet.Cell(
-			s.Invoice.Row,
-			s.Invoice.Column,
-		).Value, s.Invoice.Remove, "", 1)
-	if inv == "" {
-		return nil, errors.New("Empty invoice")
-	}
-
-	for r := s.Start; r <= sheet.MaxRow; r++ {
-		kata := sheet.Cell(r, s.Kata).Value
-		if kata == "" {
-			r++
-			continue
-		}
-
-		lot := sheet.Cell(r, s.Lot).Value
-		if lot == "" {
-			r++
-			continue
-		}
-
-		qty, err := strconv.Atoi(sheet.Cell(r, s.Qty).Value)
-		if err != nil {
-			r++
-			continue
-		}
-		if qty <= 0 {
-			r++
-			continue
-		}
-
-		data := &Data{
-			FileName: x.FileName,
-			Date:     date,
-			Invoice:  inv,
-			Kata:     kata,
-			Lot:      lot,
-			Qty:      qty,
-		}
-
-		datas = append(datas, data)
-	}
-	return datas, nil
+type SheetData struct {
+	Date    string
+	Invoice string
+	RowData []*RowData
 }
 
-func ToJSON(
+type RowData struct {
+	Kata string
+	Lot  string
+	Qty  int
+}
+
+func Fetch(xlsxStream <-chan *xemlsx.XLSX) ([]*Data, error) {
+	setting, err := NewSetting()
+	if err != nil {
+		return nil, err
+	}
+
+	done := make(chan interface{})
+	defer close(done)
+
+	xlsxDataStream := toXLSXData(done, setting, xlsxStream)
+
+	var data []*Data
+	for d := range toData(done, xlsxDataStream) {
+		data = append(data, d)
+	}
+	return data, nil
+}
+
+func ToData(
 	done <-chan interface{},
 	xlsxStream <-chan *xemlsx.XLSX,
-) <-chan string {
+) <-chan *Data {
+	dataStream := make(chan *Data)
+	defer close(dataStream)
 
-	jsonStream := make(chan string)
+	setting, err := NewSetting()
+	if err != nil {
+		return dataStream
+	}
+
+	xlsxDataStream := toXLSXData(done, setting, xlsxStream)
+	return toData(done, xlsxDataStream)
+}
+
+func toData(
+	done <-chan interface{},
+	xlsxDataStream <-chan *XLSXData,
+) <-chan *Data {
+	dataStream := make(chan *Data)
 	go func() {
-		defer close(jsonStream)
+		defer close(dataStream)
 
-		setting, err := NewSetting()
-		if err != nil {
-			log.Printf("NewSetting: %v\n", err)
-			return
+		for xd := range xlsxDataStream {
+			sd := xd.SheetData
+			for _, rd := range sd.RowData {
+				select {
+				case <-done:
+					return
+				case dataStream <- &Data{
+					Date:     sd.Date,
+					FileName: xd.FileName,
+					Invoice:  sd.Invoice,
+					Kata:     rd.Kata,
+					Lot:      rd.Lot,
+					Qty:      rd.Qty,
+				}:
+				}
+			}
 		}
+	}()
+	return dataStream
+}
+
+func toXLSXData(
+	done <-chan interface{},
+	setting *Setting,
+	xlsxStream <-chan *xemlsx.XLSX,
+) <-chan *XLSXData {
+	xlsxDataStream := make(chan *XLSXData)
+	go func() {
+		defer close(xlsxDataStream)
+
 		errCount := 0
 		for x := range xlsxStream {
-			s, err := toJSON(setting, x)
+			xd, err := xlsxData(setting, x)
 			if err != nil {
 				log.Printf("error: %v", err)
 				errCount++
@@ -137,9 +128,133 @@ func ToJSON(
 			select {
 			case <-done:
 				return
-			case jsonStream <- s:
+			case xlsxDataStream <- xd:
 			}
 		}
 	}()
-	return jsonStream
+	return xlsxDataStream
+}
+
+func xlsxData(setting *Setting, x *xemlsx.XLSX) (*XLSXData, error) {
+	sheet, ok := x.Sheet[setting.Sheet]
+	if ok == false {
+		return nil, errors.New("Sheet not found")
+	}
+
+	sd, err := sheetData(setting, sheet)
+	if err != nil {
+		return nil, err
+	}
+
+	return &XLSXData{
+		FileName:  x.FileName,
+		SheetData: sd,
+	}, nil
+}
+
+func sheetData(setting *Setting, sheet *xlsx.Sheet) (*SheetData, error) {
+	done := make(chan interface{})
+	defer close(done)
+	rowStream := generateRow(done, setting, sheet)
+	rowDataStream := toRowData(done, setting, rowStream)
+
+	date := strings.Trim(
+		sheet.Cell(
+			setting.Date.Row,
+			setting.Date.Column,
+		).Value, setting.Date.Remove)
+	if date == "" {
+		return nil, errors.New("Empty date")
+	}
+
+	// strings.Trim だとうまくいかなかった
+	invoice := strings.Replace(
+		sheet.Cell(
+			setting.Invoice.Row,
+			setting.Invoice.Column,
+		).Value, setting.Invoice.Remove, "", 1)
+	if invoice == "" {
+		return nil, errors.New("Empty invoice")
+	}
+
+	var rds []*RowData
+	for rd := range rowDataStream {
+		rds = append(rds, rd)
+	}
+	return &SheetData{
+		Date:    date,
+		Invoice: invoice,
+		RowData: rds,
+	}, nil
+}
+
+func generateRow(
+	done <-chan interface{},
+	setting *Setting,
+	sheet *xlsx.Sheet,
+) <-chan *xlsx.Row {
+	rowStearm := make(chan *xlsx.Row)
+	go func() {
+		defer close(rowStearm)
+
+		for r := setting.Start; r <= sheet.MaxRow; r++ {
+			select {
+			case <-done:
+				return
+			case rowStearm <- sheet.Row(r):
+			}
+		}
+	}()
+	return rowStearm
+}
+
+func toRowData(
+	done <-chan interface{},
+	setting *Setting,
+	rowStream <-chan *xlsx.Row,
+) <-chan *RowData {
+	rowDataStream := make(chan *RowData)
+	go func() {
+		defer close(rowDataStream)
+
+		for r := range rowStream {
+			rd, err := rowData(setting, r)
+			if err != nil {
+				break
+			}
+
+			select {
+			case <-done:
+				return
+			case rowDataStream <- rd:
+			}
+		}
+	}()
+	return rowDataStream
+}
+
+func rowData(setting *Setting, row *xlsx.Row) (*RowData, error) {
+	kata := row.Cells[setting.Kata].Value
+	if kata == "" {
+		return nil, errors.New("Empty kata")
+	}
+
+	lot := row.Cells[setting.Lot].Value
+	if lot == "" {
+		return nil, errors.New("Empty lot")
+	}
+
+	qty, err := strconv.Atoi(row.Cells[setting.Qty].Value)
+	if err != nil {
+		return nil, err
+	}
+	if qty <= 0 {
+		return nil, errors.New("Zero or minus qty")
+	}
+
+	return &RowData{
+		Kata: kata,
+		Lot:  lot,
+		Qty:  qty,
+	}, nil
 }
