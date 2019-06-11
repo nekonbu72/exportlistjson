@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	dir = "test"
+	dir      = "test"
+	jsonPath = "setting.json"
 )
 
 func testPaths() []string {
@@ -86,7 +87,7 @@ func TestToData(t *testing.T) {
 	defer close(done)
 
 	xlsxStream := testXLSXStream(done)
-	dataStream := ToData(done, xlsxStream)
+	dataStream := ToData(done, jsonPath, xlsxStream)
 
 	var data []*Data
 	for d := range dataStream {
@@ -101,7 +102,7 @@ func TestToData(t *testing.T) {
 func TestFetch(t *testing.T) {
 	done := make(chan interface{})
 	defer close(done)
-	data, err := Fetch(testXLSXStream(done))
+	data, err := Fetch(jsonPath, testXLSXStream(done))
 	if err != nil {
 		t.Errorf("Fetch: %v\n", err)
 	}

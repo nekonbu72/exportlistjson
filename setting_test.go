@@ -5,7 +5,9 @@ import (
 )
 
 func TestNewSetting(t *testing.T) {
-	s, err := NewSetting()
+	const jsonPath = "setting.json"
+
+	s, err := NewSetting(jsonPath)
 	if err != nil {
 		t.Errorf("NewSetting: %v\n", err)
 		return

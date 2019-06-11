@@ -26,11 +26,9 @@ type Setting struct {
 	Qty int `json:"qty"`
 }
 
-const jsonPath = "setting.json"
-
-func NewSetting() (*Setting, error) {
+func NewSetting(p string) (*Setting, error) {
 	s := new(Setting)
-	if err := sjson.OpenDecode(jsonPath, s); err != nil {
+	if err := sjson.OpenDecode(p, s); err != nil {
 		return nil, err
 	}
 	return s, nil

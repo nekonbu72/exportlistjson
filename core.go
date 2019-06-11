@@ -40,8 +40,11 @@ type RowData struct {
 	Qty  int
 }
 
-func Fetch(xlsxStream <-chan *xemlsx.XLSX) ([]*Data, error) {
-	setting, err := NewSetting()
+func Fetch(
+	jsonPath string,
+	xlsxStream <-chan *xemlsx.XLSX,
+) ([]*Data, error) {
+	setting, err := NewSetting(jsonPath)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +63,13 @@ func Fetch(xlsxStream <-chan *xemlsx.XLSX) ([]*Data, error) {
 
 func ToData(
 	done <-chan interface{},
+	jsonPath string,
 	xlsxStream <-chan *xemlsx.XLSX,
 ) <-chan *Data {
 	dataStream := make(chan *Data)
 	defer close(dataStream)
 
-	setting, err := NewSetting()
+	setting, err := NewSetting(jsonPath)
 	if err != nil {
 		return dataStream
 	}
