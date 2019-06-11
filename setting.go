@@ -1,6 +1,11 @@
 package exportlistmapping
 
-import "github.com/nekonbu72/sjson/sjson"
+import (
+	"errors"
+
+	"github.com/nekonbu72/sjson/sjson"
+	"github.com/tealeg/xlsx"
+)
 
 type Setting struct {
 	Sheet string `json:"sheet"`
@@ -32,4 +37,36 @@ func NewSetting(p string) (*Setting, error) {
 		return nil, err
 	}
 	return s, nil
+}
+
+func (s *Setting) isValid(sheet *xlsx.Sheet) error {
+	if isWithinMaxRow(s.Date.Row, sheet) == false {
+		return errors.New("Data.Row")
+	}
+
+	if isWithinMaxRow(s.Invoice.Row, sheet) == false {
+		return errors.New("Invoice.Row")
+	}
+
+	if isWithinMaxCol(s.Kata, sheet) == false {
+		return errors.New("Kata.Col")
+	}
+
+	if isWithinMaxCol(s.Lot, sheet) == false {
+		return errors.New("Lot.Col")
+	}
+
+	if isWithinMaxCol(s.Qty, sheet) == false {
+		return errors.New("Qty.Col")
+	}
+
+	return nil
+}
+
+func isWithinMaxRow(row int, sheet *xlsx.Sheet) bool {
+	return row <= sheet.MaxRow
+}
+
+func isWithinMaxCol(col int, sheet *xlsx.Sheet) bool {
+	return col <= sheet.MaxCol
 }

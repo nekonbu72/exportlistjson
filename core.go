@@ -143,6 +143,10 @@ func xlsxData(setting *Setting, x *xemlsx.XLSX) (*XLSXData, error) {
 }
 
 func sheetData(setting *Setting, sheet *xlsx.Sheet) (*SheetData, error) {
+	if err := setting.isValid(sheet); err != nil {
+		return nil, err
+	}
+
 	done := make(chan interface{})
 	defer close(done)
 	rowStream := generateRow(done, setting, sheet)

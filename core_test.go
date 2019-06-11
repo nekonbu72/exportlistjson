@@ -81,30 +81,6 @@ func testXLSXStream(done chan interface{}) <-chan *xemlsx.XLSX {
 	}()
 	return xlsxStream
 }
-
-func TestToData(t *testing.T) {
-	setting, err := NewSetting(jsonPath)
-	if err != nil {
-		t.Errorf("NewSetting: %v\n", err)
-		return
-	}
-
-	done := make(chan interface{})
-	defer close(done)
-
-	xlsxStream := testXLSXStream(done)
-	dataStream := ToData(done, setting, xlsxStream)
-
-	var data []*Data
-	for d := range dataStream {
-		data = append(data, d)
-	}
-
-	for _, d := range data {
-		log.Println(d)
-	}
-}
-
 func TestFetch(t *testing.T) {
 	setting, err := NewSetting(jsonPath)
 	if err != nil {
